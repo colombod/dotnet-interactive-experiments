@@ -1,4 +1,4 @@
-# Get started iwth your own .NET Interactive app
+# Get started with your own .NET Interactive app
 
 Install depednecies by running:
 ```
