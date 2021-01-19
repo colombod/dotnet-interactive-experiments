@@ -16,18 +16,51 @@
 
     </div>
     <script>
+        let domparser = new DOMParser();
         interactive.init(window);
         interactive.createDotnetInteractiveClient("http://localhost:9000/")
-        .then(client =>{
-            window.document.getElementById("submit_code").onclick = () =>{
-                let code = window.document.getElementById("code_src").value;
-                client.submitCode(code);
-            };
+            .then(client => {
+                window.document.getElementById("submit_code").onclick = () => {
+                    let code = window.document.getElementById("code_src").value;
+                    client.submitCode(code);
+                };
 
-            client.subscribeToKernelEvents(eventEnvelope =>{
-                console.log(eventEnvelope);
+                client.subscribeToKernelEvents(eventEnvelope => {
+                    console.log(eventEnvelope);
+                    switch (eventEnvelope.eventType) {
+                        case "ReturnValueProduced":
+                        case "DisplayedValueProduced":
+                        case "DisplayedValueUpdated":
+                        case "DisplayedValueUpdated":
+                            let formattedValues = eventEnvelope.event.formattedValues;
+
+                            let html = formattedValues.find(fv => fv.mimeType === "text/html");
+                            if (html) {
+                                let div = document.createElement("div");
+                                document.getElementById("output_render_target").appendChild(div);
+                                let fragment = domparser.parseFromString(html.value, "text/html");
+
+                                for (let element of fragment.getElementsByTagName("BODY")[0].childNodes) {
+                                    div.appendChild(element);
+                                    if (element.tagName === "SCRIPT") {
+                                        eval(element.innerText);
+                                    };
+                                }
+                                return;
+                            }
+
+                            let text = formattedValues.find(fv => fv.mimeType === "text/plain");
+                            if (text) {
+                                let div = document.createElement("div");
+                                div.innerText = text.value;
+                                document.getElementById("output_render_target").appendChild(div);
+                                return;
+                            }
+
+                            break;
+                    }
+                });
             });
-        });
     </script>
 </body>
 
